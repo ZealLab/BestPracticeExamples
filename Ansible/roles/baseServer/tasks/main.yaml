@@ -1,0 +1,32 @@
+    - name: Ensure admin group exists
+      ansible.builtin.group:
+        name: admin
+        state: present
+
+    - name: Adding admin user to group  
+      user: name=admin
+            groups=admin
+            append=yes
+
+    - name: Install CA Certificates Tools
+      yum:
+        name: ca-certificates
+        state: present
+        update_cache: yes
+
+    - name: Download CA Cert
+      shell: curl https://azurecerts.blob.core.windows.net/scripts/azure.cer -o /etc/pki/ca-trust/source/anchors/AzureCA.pem
+
+    - name: Trust Azure CA Cert
+      shell: update-ca-trust force-enable;
+
+    - name: Adding Solarwinds Agent Ubuntu / Debian
+      shell: |
+        if(!(cat /etc/apt/sources.list | grep 'solarwinds'))
+          then
+          echo 'deb [trusted=yes] https://solarwinds.example.com/Orion/AgentManagement/LinuxPackageRepository.ashx?path= ubuntu-14 swiagent' >> /etc/apt/sources.list
+          apt update -y; apt install swiagent -y
+          echo -e "2\n0.0.0.0\n4\nansible\n5\nExAmPlE\n7\nyes\n\n" > /opt/SolarWinds/Agent/bin/driver.ini
+          cat /opt/SolarWinds/Agent/bin/driver.ini | service swiagentd init
+        fi
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'

@@ -1,0 +1,11 @@
+---
+- name: Playbook Setup
+  hosts: all
+  become: yes
+  become_method: sudo
+
+- hosts: all
+  become: yes
+  become_method: sudo
+  roles:
+    - role: baseServer
