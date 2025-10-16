@@ -1,7 +1,9 @@
-# All Functions should be seperated into modules, not included in the primary script.
+# This is a module that contains the 'Get-Example_Information' function.
+# A module is a self-contained reusable unit that can contain functions, cmdlets, variables, and more.
+
+# The 'Function' block is used to define a new function.
 Function Get-Example_Information {
-    # Functions should have documentation as well. This lets other engineers know what your intentions were for this function.
-    # This helps others to understand the thought process throughout the application.
+    # The '<# ... #>' block is a comment-based help block for the function.
     <#
         .Notes
         --------------------------------------------------------
@@ -24,15 +26,19 @@ Function Get-Example_Information {
         .EXAMPLE
         Get-Example_Information
     #>
+    # The 'Param' block is used to define the parameters of the function.
     Param(
+        # The 'UserInfo' parameter is a mandatory object parameter.
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [PSObject]$UserInfo
     )
 
-    # Write output to user
+    # The 'Write-Host' cmdlet is used to write a message to the console.
+    # In this case, we are writing a message to the user with the information that was passed to the function.
     Write-Host -ForegroundColor Green "Hello $($UserInfo.Name) it looks like you are a(n) $($UserInfo.CareerLevel) $($UserInfo.JobTitle). Hope you enjoyed this example. Any feedback let me know, I always want to find ways to improve."
 }
 
-# Export all functions as a module
+# The 'Export-ModuleMember' cmdlet is used to export the functions from the module.
+# This makes the functions available to be called from other scripts.
 Export-ModuleMember -Function *

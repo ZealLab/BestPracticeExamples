@@ -1,0 +1,37 @@
+---
+# This file contains the tasks for the 'webserver' role.
+# These tasks will be executed in order on the target hosts.
+
+# This task installs the Nginx web server.
+- name: Install nginx
+  # The 'ansible.builtin.package' module is used to manage packages.
+  ansible.builtin.package:
+    # The name of the package to install.
+    name: nginx
+    # The desired state of the package. 'present' ensures that the package is installed.
+    state: present
+    # 'update_cache: yes' updates the package cache before installing the package.
+    update_cache: yes
+
+# This task creates the index.html file from a template.
+- name: Create index.html
+  # The 'ansible.builtin.template' module is used to create files from templates.
+  ansible.builtin.template:
+    # The source template file.
+    src: index.html.j2
+    # The destination path for the file on the target host.
+    dest: /var/www/html/index.html
+  # 'notify: restart nginx' tells Ansible to notify the 'restart nginx' handler after this task is completed.
+  # The handler will only be run if this task makes a change.
+  notify: restart nginx
+
+# This task ensures that the Nginx service is running and enabled.
+- name: Ensure nginx is running and enabled
+  # The 'ansible.builtin.service' module is used to manage services.
+  ansible.builtin.service:
+    # The name of the service.
+    name: nginx
+    # The desired state of the service. 'started' ensures that the service is running.
+    state: started
+    # 'enabled: yes' ensures that the service will start automatically at boot.
+    enabled: yes

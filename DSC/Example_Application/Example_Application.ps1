@@ -1,91 +1,74 @@
-# Name of DSC should be like "Team_ServerPourpose.ServerType"
-# Configuration name should match file name
+# This is the main configuration file for the Example_Application.
+# It defines the desired state of the nodes that are part of the application.
+
+# The 'Configuration' block is the main block of a DSC configuration.
+# It defines the name of the configuration.
 Configuration Example_Application {
-    # Module set for base configurations
+    # The 'Import-DscResource' keyword is used to import the DSC resources that are needed by the configuration.
+    # In this case, we are importing the 'customModules', 'WebAdministrationDsc', and 'AccessControlDsc' modules.
     Import-DscResource -Module customModules
-    # Module for IIS and Web Administration
     Import-DscResource -Module WebAdministrationDsc
-    # Module for ACL Directory and File Permissions
     Import-DscResource -ModuleName AccessControlDsc
 
-    # Will compile all nodes in the data file (.psd1)
+    # The 'Node' block is used to define the configuration for a specific node.
+    # In this case, we are using the '$AllNodes.NodeName' variable to apply the configuration to all nodes defined in the data file.
     Node $AllNodes.NodeName {
-        # Base Configurations #####################################################################
-        # Joins to domain sets timezone adds security groups ect.
+        # This block uses the 'customBaseServer' resource to configure the base settings of the server.
         customBaseServer setup {
             TimeZone = $Node.TimeZone
         }
-        customeSecurity Security {
-            Domain               = $Node.Domain
-            AD_OU                = $Node.AD_OU
-            AdditionalAdminUsers = $Node.AdditionalAdminUsers
-            RemoteDesktopUsers   = $Node.RemoteDesktopUsers
-        }
+        # This block uses the 'customChocoInstalls' resource to install packages with Chocolatey.
         customChocoInstalls chocos {
             AdditionalComponents = $AdditionalComponents
+            Credential = $Node.Credential
         }
+        # The 'LocalConfigurationManager' resource is used to configure the Local Configuration Manager (LCM) of the node.
+        # The LCM is the engine of DSC. It runs on every target node, and it is responsible for calling the configuration resources that are included in a DSC configuration script.
         LocalConfigurationManager {
             DebugMode = "All"
         }
 
-        # Roles and Features ######################################################################
-        # Command to clone roles and features from a server and set it to the clipboard for use here #
-        # (((Get-WindowsFeature | Where {$_.InstallState -eq 'Installed' -and $_.Name -ne "PowerShell-ISE" -and $_.Name -ne "Server-Gui-Mgmt-Infra" -and $_.Name -ne "Server-Gui-Shell" -and $_.Name -ne "" -and $_.Name -ne "SNMP-Service" -and $_.Name -ne "User-Interfaces-Infra" -and $_.Name -ne 'FS-SMB1'}).Name | ForEach-Object {"'$PSItem',"}) -join ' ').TrimEnd(',') | Set-Clipboard
-        # These can also be set in the data file
-        WindowsFeatureSet IISRolesAndFeatures {
-            #Name                 = $Node.Features
-            Name                 = @("Web-Server", "Web-Common-Http", "Web-Default-Doc", "Web-Dir-Browsing",
-                "Web-Http-Errors", "Web-Static-Content", "Web-Http-Redirect", "Web-Health", "Web-Http-Logging", "Web-ODBC-Logging",
-                "Web-Performance", "Web-Stat-Compression", "Web-Dyn-Compression", "Web-Security", "Web-Filtering", "Web-Basic-Auth",
-                "Web-App-Dev", "Web-ASP", "Web-ISAPI-Ext", "Web-ISAPI-Filter", "Web-Mgmt-Tools", "Web-Mgmt-Console", "Web-Mgmt-Compat", 
-                "Web-Metabase", "Web-Lgcy-Mgmt-Console", "RDC", "RSAT", "RSAT-Feature-Tools", "RSAT-SMTP", "SMTP-Server", "PowerShellRoot", 
-                "PowerShell", 'Web-Net-Ext45', 'Web-Asp-Net45', 'NET-Framework-45-Core', 'NET-Framework-45-ASPNET')
+        # This block uses the 'WindowsFeatureSet' resource to install the IIS roles and features.
+        $iisFeatures = @{
+            Name                 = $Node.Features
             Ensure               = 'Present'
             IncludeAllSubFeature = $false
         }
+        WindowsFeatureSet IISRolesAndFeatures @iisFeatures
 
-        # Environment Variables #################################################################
-        # Sets windows system environment variables
+        # This block uses the 'Environment' resource to create an environment variable.
         Environment envVariable {
             Ensure = 'Present'
             Name   = "envVariable"
-            # Variable stored in the data file specific to the node
             Value  = $Node.EnvVariable
         }
         
-        # Services ################################################################################
-        # Sets service startup type and state
+        # This block uses the 'ServiceSet' resource to configure a service.
         ServiceSet smtpService {
             Name        = "smtpsvc"
             StartupType = "Automatic"
             State       = "Running"
         }
 
-        # Files and Directories ###################################################################
-        # Creates and maintains directory at it's destination
+        # This block uses the 'File' resource to create a directory.
         File webSiteDirectory {
             Ensure          = 'Present'
             DestinationPath = "C:\inetpub\wwwroot\$($Node.SiteDir)"
             Type            = 'Directory'
-            # Dependancy is the Feature Set we defined
             DependsOn       = '[WindowsFeatureSet]IISRolesAndFeatures'
         }
+        # This block uses the 'File' resource to create a directory.
         File exportsDirectory {
             Ensure          = 'Present'
             DestinationPath = "C:\inetpub\wwwroot\$($Node.SiteDir)\Exports"
             Type            = 'Directory'
             DependsOn       = '[File]webSiteDirectory'
-            # Ability to copy files to directory from a data source
-            #SourcePath      = "\\azure.file.core.windows.net\"
-            #Recurse         = $true
         }
 
-        # Security and Permissions ################################################################
-        # Sets NTFS ACL permissions on the Exports directory
+        # This block uses the 'NtfsAccessEntry' resource to set the NTFS permissions on a directory.
         NtfsAccessEntry exportsPermission {
             Path              = "C:\inetpub\wwwroot\$($Node.SiteDir)\Exports"
             AccessControlList = @(
-                # One entry per user
                 NTFSAccessControlList {
                     Principal          = "BUILTIN\IIS_IUSRS"
                     ForcePrincipal     = $true
@@ -97,7 +80,7 @@ Configuration Example_Application {
                             Ensure            = 'Present'
                         }
                     )
-                }
+                },
                 NTFSAccessControlList {
                     Principal          = "BUILTIN\USERS"
                     ForcePrincipal     = $true
@@ -109,7 +92,7 @@ Configuration Example_Application {
                             Ensure            = 'Present'
                         }
                     )
-                }
+                },
                 NTFSAccessControlList {
                     Principal          = "NT SERVICE\TrustedInstaller"
                     ForcePrincipal     = $true

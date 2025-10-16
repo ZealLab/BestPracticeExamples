@@ -1,0 +1,10 @@
+---
+# This is the main playbook for the Ansible example.
+# It applies the 'webserver' role to all hosts in the 'webservers' group.
+
+- hosts: webservers
+  # 'become: yes' tells Ansible to use privilege escalation (e.g., sudo) to run the tasks.
+  become: yes
+  # The 'roles' keyword lists the roles to be applied to the hosts.
+  roles:
+    - webserver

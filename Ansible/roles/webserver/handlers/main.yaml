@@ -1,0 +1,12 @@
+---
+# This file contains the handlers for the 'webserver' role.
+# Handlers are tasks that are only run when notified by another task.
+
+# This handler restarts the Nginx service.
+- name: restart nginx
+  # The 'ansible.builtin.service' module is used to manage services.
+  ansible.builtin.service:
+    # The name of the service to restart.
+    name: nginx
+    # The desired state of the service. 'restarted' will restart the service.
+    state: restarted

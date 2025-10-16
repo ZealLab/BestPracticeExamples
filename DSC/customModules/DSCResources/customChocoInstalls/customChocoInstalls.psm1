@@ -1,37 +1,43 @@
+# This is a custom DSC resource that installs packages with Chocolatey.
 Configuration customChocoInstalls {
-    param(   
+    param(
+        # The 'AdditionalComponents' parameter specifies additional packages to be installed.
         [Parameter]
         [String]$AdditionalComponents = $Null,
-        [Parameter]
-        [String]$InstallUserAccount = $Null
+        # The 'Credential' parameter specifies the credentials to use for the installation.
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$Credential
     )
 
+    # The 'Import-DscResource' keyword is used to import the DSC resources that are needed by the resource.
     Import-DSCResource -ModuleName PSDesiredStateConfiguration
     Import-DscResource -Module cChoco
 
-    $DomainJoinCredential = Get-AutomationPsCredential -Name "DomainJoinUser"
-
+    # This block uses the 'cChocoInstaller' resource to install Chocolatey.
     cChocoInstaller installChoco {
         InstallDir           = "c:\choco"
-        DependsOn            = "[Script]detectFailedInstall"
-        PsDscRunAsCredential = $DomainJoinCredential
+        # The 'PsDscRunAsCredential' property specifies the credentials to use to run the resource.
+        PsDscRunAsCredential = $Credential
     }
 
+    # This block uses the 'cChocoPackageInstallerSet' resource to install a set of base packages.
     cChocoPackageInstallerSet InstallBaseApps {
         Ensure               = 'Present'
         Name                 = @(
             "chocoPackagesToInstall"
         )
         DependsOn            = "[cChocoInstaller]installChoco"
-        PsDscRunAsCredential = $DomainJoinCredential
+        PsDscRunAsCredential = $Credential
     }
 
-        if ( $AdditionalComponents -ne $null ) {
+    # This 'if' statement checks if the 'AdditionalComponents' parameter is set.
+    if ( $AdditionalComponents -ne $null ) {
+        # This block uses the 'cChocoPackageInstallerSet' resource to install additional packages.
         cChocoPackageInstallerSet InstallAdditionalApps {
             Ensure               = 'Present'
             Name                 = $AdditionalComponents
             DependsOn            = "[cChocoPackageInstallerSet]InstallBaseApps"
-            PsDscRunAsCredential = $DomainJoinCredential
+            PsDscRunAsCredential = $Credential
         }
     }
 }

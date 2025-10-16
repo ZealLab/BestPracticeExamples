@@ -1,7 +1,9 @@
-# All Functions should be seperated into modules, not included in the primary script.
+# This is a module that contains the 'Set-Example_Information' function.
+# A module is a self-contained reusable unit that can contain functions, cmdlets, variables, and more.
+
+# The 'Function' block is used to define a new function.
 Function Set-Example_Information {
-    # Functions should have documentation as well. This lets other engineers know what your intentions were for this function.
-    # This helps others to understand the thought process throughout the application.
+    # The '<# ... #>' block is a comment-based help block for the function.
     <#
         .Notes
         --------------------------------------------------------
@@ -29,7 +31,7 @@ Function Set-Example_Information {
         $obj = Set-Example_Information -Name "John Smith" -JobTitle "Account Manager" -CareerLevel "Senior"
     #>
 
-    # Functions should have validations also for future proofing
+    # The 'Param' block is used to define the parameters of the function.
     Param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -44,12 +46,15 @@ Function Set-Example_Information {
         [String]$CareerLevel
     )
 
-    return @{
+    # The 'return' statement is used to return a value from the function.
+    # In this case, we are returning a custom object with the user's information.
+    return [PSCustomObject]@{
         Name = $Name
         JobTitle = $JobTitle
-        $CareerLevel = $CareerLevel
+        CareerLevel = $CareerLevel
     }
 }
 
-# Export all functions as a module
+# The 'Export-ModuleMember' cmdlet is used to export the functions from the module.
+# This makes the functions available to be called from other scripts.
 Export-ModuleMember -Function *
