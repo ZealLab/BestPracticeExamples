@@ -150,7 +150,3 @@ By adding a CI/CD pipeline, you can improve the quality of the code and make it 
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the terms of the LICENSE file.
